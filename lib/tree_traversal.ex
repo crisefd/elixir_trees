@@ -6,7 +6,7 @@ defmodule ElixirTrees.TreeTraversal do
   alias ElixirTrees.Tree
 
   @type traverse() :: :dfs | :bfs
-  @type tree() :: Tree.t
+  @type tree() :: Tree.t()
   @type history() :: [any]
   @type result() :: {:continue, any} | {:stop, any}
   @type operation() :: (any, any, history -> result)
@@ -44,9 +44,10 @@ defmodule ElixirTrees.TreeTraversal do
 
   def traverse(tree, operation, type) do
     case type do
-       :dfs -> 
-        new_stack() |> tree_insert(tree) |> dfs(operation, []) 
-       :bfs -> 
+      :dfs ->
+        new_stack() |> tree_insert(tree) |> dfs(operation, [])
+
+      :bfs ->
         new_queue() |> tree_insert(tree) |> bfs(operation, [])
     end
   end
@@ -57,11 +58,8 @@ defmodule ElixirTrees.TreeTraversal do
 
   defp dfs([], _, history), do: history
 
-  defp dfs([%Tree{value: value,
-                  key: key,
-                  children: children} | stack], operation, history) do
-     next(&dfs/3, stack,
-          value, key, children, operation, history)
+  defp dfs([%Tree{value: value, key: key, children: children} | stack], operation, history) do
+    next(&dfs/3, stack, value, key, children, operation, history)
   end
 
   @spec bfs(queue, operation, history) :: history
@@ -71,12 +69,8 @@ defmodule ElixirTrees.TreeTraversal do
   defp bfs({[], []}, _, history), do: history
 
   defp bfs(queue, operation, history) do
-     {{:value,
-      %Tree{value: value,
-            key: key,
-            children: children }}, new_queue} = :queue.out queue
-     next(&bfs/3, new_queue,
-          value, key, children, operation, history)
+    {{:value, %Tree{value: value, key: key, children: children}}, new_queue} = :queue.out(queue)
+    next(&bfs/3, new_queue, value, key, children, operation, history)
   end
 
   @spec tree_insert(collection, tree) :: collection
@@ -95,20 +89,24 @@ defmodule ElixirTrees.TreeTraversal do
     case apply_operation(operation, value, key, history) do
       {:stop, res} ->
         [res | history]
+
       {:continue, res} ->
         children
-        |> Enum.reduce(collection,
-                       fn tree, acc ->
-                        tree_insert(acc, tree)
-                       end)
+        |> Enum.reduce(
+          collection,
+          fn tree, acc ->
+            tree_insert(acc, tree)
+          end
+        )
         |> named_function.(operation, [res | history])
     end
   end
 
-  @spec apply_operation(operation, any, any, [any]) :: result
+  @spec apply_operation(operation, any, any, history) :: result
 
-  defp apply_operation(operation, value, key, history)  do
+  defp apply_operation(operation, value, key, history) do
     arity = :erlang.fun_info(operation)[:arity]
+
     if arity != 3 do
       raise "Function #{operation} has invalid arity.
               Expected 3, got #{arity}."
@@ -123,6 +121,5 @@ defmodule ElixirTrees.TreeTraversal do
 
   @spec new_queue() :: queue
 
-  defp new_queue, do: :queue.new
-
+  defp new_queue, do: :queue.new()
 end

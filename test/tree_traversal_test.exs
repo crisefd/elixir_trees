@@ -1,4 +1,4 @@
-defmodule ElixirTreesTest do
+defmodule ElixirTreeTraversalTest do
   use ExUnit.Case
   alias ElixirTrees.TreeTraversal
   alias ElixirTrees.Tree
